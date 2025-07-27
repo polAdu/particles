@@ -2,15 +2,15 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.animation import FuncAnimation
 
-dt = 0.001 
-box_size = 10.0
-d_min = 1 
+dt = 0.0001 
+box_size = 25.0
 T = 100    
-N = 15      
-total_steps = 1000
-save_interval = 1
-epsilon = 10 ** (-10)
+N = 50    
+total_steps = 100000
+save_interval = 10
+epsilon = 1 
 sigma = 1
+d_min = 3 * sigma
 
 class Particle:
     def __init__(self):
@@ -50,8 +50,20 @@ def interaction(p1, p2):
         for dy in [-box_size, 0, box_size]:
             d = np.sqrt((p1.x - p2.x - dx) ** 2 + (p1.y - p2.y - dy) ** 2)            
             if d < d_min and d != 0:
-                p1.ax += (-24 * epsilon / sigma ** 2) * (2 * (sigma / d) ** 14 - (sigma / d) ** 8) * (p1.x - p2.x - dx)
-                p1.ay += (-24 * epsilon / sigma ** 2) * (2 * (sigma / d) ** 14 - (sigma / d) ** 8) * (p1.x - p2.x - dy)
+                force_mult = (-24 * epsilon / sigma ** 2) * (2 * (sigma / d) ** 6 - 1) * (sigma / d) ** 8
+                p1.ax += force_mult * (p1.x - p2.x - dx)
+                p1.ay += force_mult * (p1.y - p2.y - dy)
+
+def energy(ps):
+    kinetic = 0.5 * sum(p.vx**2 + p.vy**2 for p in ps)
+    potential = 0.0
+    for i in range(N):
+        for j in range(i + 1, N):
+            for dx in [-box_size, 0, box_size]:
+                for dy in [-box_size, 0, box_size]:
+                    d = np.sqrt((ps[i].x - ps[j].x + dx)**2 + (ps[i].y - ps[j].y + dy)**2)
+                    potential += 4 * epsilon * ((sigma / d)**12 - (sigma / d)**6)
+    return kinetic + potential
 
 particles = [Particle() for _ in range(N)]
 
@@ -79,6 +91,11 @@ for step in range(total_steps):
     if step % save_interval == 0:
         all_positions.append(np.array([[p.x, p.y] for p in particles]))
 
+
+    if step % 1000 == 0:
+        print('Пройдено ', step, ' шагов')
+        print(energy(particles))
+
 fig, ax = plt.subplots(figsize=(8, 8))
 ax.set_xlim(0, box_size)
 ax.set_ylim(0, box_size)
@@ -101,7 +118,7 @@ ani = FuncAnimation(
     init_func=init,
     interval=100,  
     blit=True,
-    repeat=False
+    repeat=True
 )
 
 plt.gcf()._ani = ani
