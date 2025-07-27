@@ -2,20 +2,25 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.animation import FuncAnimation
 
-dt = 0.0001 
-box_size = 25.0
-T = 100    
-N = 50    
-total_steps = 100000
-save_interval = 10
-epsilon = 1 
+dt = 0.005     
+epsilon = 1
 sigma = 1
+k_b = 1
+
+box_size = 10 * sigma 
 d_min = 3 * sigma
+T = 0.2 * epsilon / k_b #0.2-0.7
+N = 100 
+
+energy_interval = 100
+save_interval = 5 
+term_times = 200
+total_steps = 1000
 
 class Particle:
     def __init__(self):
-        self.x = np.random.rand() * box_size
-        self.y = np.random.rand() * box_size
+        self.x = 0.0
+        self.y = 0.0
         self.vx = np.random.normal(0, np.sqrt(T))
         self.vy = np.random.normal(0, np.sqrt(T))
         self.ax = 0.0
@@ -50,10 +55,12 @@ def interaction(p1, p2):
         for dy in [-box_size, 0, box_size]:
             d = np.sqrt((p1.x - p2.x - dx) ** 2 + (p1.y - p2.y - dy) ** 2)            
             if d < d_min and d != 0:
-                force_mult = (-24 * epsilon / sigma ** 2) * (2 * (sigma / d) ** 6 - 1) * (sigma / d) ** 8
+                force_mult = (24 * epsilon / sigma ** 2) * (2 * (sigma / d) ** 6 - 1) * (sigma / d) ** 8
                 p1.ax += force_mult * (p1.x - p2.x - dx)
                 p1.ay += force_mult * (p1.y - p2.y - dy)
-
+                
+                p2.ax -= force_mult * (p1.x - p2.x - dx)
+                p2.ay -= force_mult * (p1.y - p2.y - dy)
 def energy(ps):
     kinetic = 0.5 * sum(p.vx**2 + p.vy**2 for p in ps)
     potential = 0.0
@@ -65,7 +72,24 @@ def energy(ps):
                     potential += 4 * epsilon * ((sigma / d)**12 - (sigma / d)**6)
     return kinetic + potential
 
-particles = [Particle() for _ in range(N)]
+def termalize(ps, t):
+    kinetic = sum(p.vx**2 + p.vy**2 for p in ps) / (2 * len(ps))
+    scale = np.sqrt(t/kinetic)
+    for p in ps:
+        p.vx *= scale
+        p.vy *= scale
+
+n_rows = int(np.ceil(np.sqrt(N)))
+spacing = box_size / n_rows
+particles = []
+
+for i in range(N):
+    x = (i % n_rows + 0.5) * spacing
+    y = (i // n_rows + 0.5) * spacing
+    p = Particle()
+    p.x = x
+    p.y = y
+    particles.append(p)
 
 avg_vx = sum(p.vx for p in particles) / N
 avg_vy = sum(p.vy for p in particles) / N
@@ -74,14 +98,19 @@ for p in particles:
     p.vy -= avg_vy
 
 all_positions = []
-all_speeds = []
+en_list = []
+en_term = []
+times = 0
+
+en_term.append(energy(particles))
+
 for step in range(total_steps):
     
     for p in particles:
         p.save_a()
 
     for i in range(N):
-        for j in range(N):
+        for j in range(i + 1, N):
             interaction(particles[i], particles[j])
         
     for p in particles:
@@ -92,9 +121,17 @@ for step in range(total_steps):
         all_positions.append(np.array([[p.x, p.y] for p in particles]))
 
 
-    if step % 1000 == 0:
+    if step % energy_interval == 0:
         print('Пройдено ', step, ' шагов')
         print(energy(particles))
+        en_list.append(energy(particles))
+
+    if (np.abs(np.mean(en_term) / en_term[len(en_term) - 1]) < 0.05) or times < term_times:
+        en_term.append(energy(particles))
+        termalize(particles, T)
+        print('термализация!')
+        times += 1
+
 
 fig, ax = plt.subplots(figsize=(8, 8))
 ax.set_xlim(0, box_size)
