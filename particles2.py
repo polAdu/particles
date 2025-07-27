@@ -5,8 +5,8 @@ from matplotlib.animation import FuncAnimation
 dt = 0.001 
 box_size = 10.0
 d_min = 1 
-T = 1    
-N = 25      
+T = 100    
+N = 15      
 total_steps = 1000
 save_interval = 1
 epsilon = 10 ** (-10)
@@ -39,7 +39,7 @@ class Particle:
 
 #def interaction(particle1, particle2):
 #    d = np.sqrt((particle1.x - particle2.x) ** 2 + (particle1.y - particle2.y) ** 2)
-#    if d < d_min:
+#    if d < d_min and d != 0:
 #        particle1.ax += (-24 * epsilon / sigma ** 2) * (2 * (sigma / d) ** 14 - (sigma / d) ** 8) * (particle1.x - particle2.x)
 #        particle2.ax += (-24 * epsilon / sigma ** 2) * (2 * (sigma / d) ** 14 - (sigma / d) ** 8) * (particle2.x - particle1.x)
 #        particle1.ay += (-24 * epsilon / sigma ** 2) * (2 * (sigma / d) ** 14 - (sigma / d) ** 8) * (particle1.y - particle2.y)
@@ -49,7 +49,7 @@ def interaction(p1, p2):
     for dx in [-box_size, 0, box_size]:
         for dy in [-box_size, 0, box_size]:
             d = np.sqrt((p1.x - p2.x - dx) ** 2 + (p1.y - p2.y - dy) ** 2)            
-            if d < d_min:
+            if d < d_min and d != 0:
                 p1.ax += (-24 * epsilon / sigma ** 2) * (2 * (sigma / d) ** 14 - (sigma / d) ** 8) * (p1.x - p2.x - dx)
                 p1.ay += (-24 * epsilon / sigma ** 2) * (2 * (sigma / d) ** 14 - (sigma / d) ** 8) * (p1.x - p2.x - dy)
 
