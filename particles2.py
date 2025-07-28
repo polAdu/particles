@@ -240,13 +240,13 @@ def main(temp, num):
 #scatter1 = ax1.scatter(natural_list, en_list)
 #scatter2 = ax1.scatter(natural_list, kin_en_list, c = 'red')
     pressure = xcount / (4 * dt * total_steps)
-    pressure_file = Path(f"/home/kutuka/Documents/N={N}|T={T}/pressure.txt")
+    pressure_file = Path(f"/home/kutuka/Documents/part2/N={N}|T={T}/pressure.txt")
     pressure_file.parent.mkdir(exist_ok=True, parents=True)
 
-    ver_pressure_file = Path(f"/home/kutuka/Documents/N={N}|T={T}/ver_pressure.txt")
+    ver_pressure_file = Path(f"/home/kutuka/Documents/part2/N={N}|T={T}/ver_pressure.txt")
     ver_pressure_file.parent.mkdir(exist_ok=True, parents=True)   
     
-    energy_file = Path(f"/home/kutuka/Documents/N={N}|T={T}/energy.txt")
+    energy_file = Path(f"/home/kutuka/Documents/part2/N={N}|T={T}/energy.txt")
     energy_file.parent.mkdir(exist_ok=True, parents=True)
 
     pressure_file.write_text(str(pressure))
@@ -281,5 +281,9 @@ def main(temp, num):
 
 #plt.tight_layout()
 #plt.show()
-for n in range(20, 100, 2):
-    main(0.45, n)
+n = int(input())
+for t in range (1, 21):
+    main(0.2 + t * 0.005 + n * 0.1, 40)
+
+
+
